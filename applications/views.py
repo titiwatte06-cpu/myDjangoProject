@@ -1,11 +1,12 @@
 from django.contrib.auth import authenticate
-from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework import status, viewsets
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import LoginSerializer, RegisterSerializer
+from .models import JobApplication
+from .serializers import JobApplicationSerializer, LoginSerializer, RegisterSerializer
 
 
 class RegisterView(APIView):
@@ -43,3 +44,14 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'refresh': str(refresh),
         })
+
+
+class JobApplicationViewSet(viewsets.ModelViewSet):
+    serializer_class = JobApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return JobApplication.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
